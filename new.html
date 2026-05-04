@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3D Scaling Cube</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+h1 {
+  margin: 20px 0;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Scene */
+.scene {
+  width: 320px;
+  height: 320px;
+  perspective: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* NEW: scaling wrapper */
+.scaler {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+/* Cube rotation */
+.cube {
+  width: 150px;
+  height: 150px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+}
+
+/* Faces */
+.face {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(5px);
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,0.1),
+    0 0 20px rgba(0,0,0,0.3);
+}
+
+/* Colors */
+.front  { background: rgba(255, 0, 100, 0.6); transform: translateZ(75px); }
+.back   { background: rgba(0, 255, 200, 0.6); transform: rotateY(180deg) translateZ(75px); }
+.right  { background: rgba(100, 0, 255, 0.6); transform: rotateY(90deg) translateZ(75px); }
+.left   { background: rgba(255, 200, 0, 0.6); transform: rotateY(-90deg) translateZ(75px); }
+.top    { background: rgba(0, 150, 255, 0.6); transform: rotateX(90deg) translateZ(75px); }
+.bottom { background: rgba(255, 100, 0, 0.6); transform: rotateX(-90deg) translateZ(75px); }
+
+/* Controls */
+.controls {
+  margin-top: 30px;
+  background: rgba(255,255,255,0.08);
+  padding: 25px;
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.control-group {
+  margin-bottom: 20px;
+}
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.value {
+  color: #00d4ff;
+  font-weight: bold;
+}
+
+/* Sliders */
+input[type=range] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.2);
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #00d4ff, #5f27cd);
+  cursor: pointer;
+}
+
+/* Buttons */
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.pause-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.reset-btn {
+  background: #3498db;
+  color: white;
+}
+
+.paused {
+  animation-play-state: paused !important;
+}
+</style>
+</head>
+
+<body>
+
+<h1>3D Scaling Cube</h1>
+
+<div class="scene">
+  <div class="scaler" id="scaler">
+    <div class="cube" id="cube">
+      <div class="face front"></div>
+      <div class="face back"></div>
+      <div class="face right"></div>
+      <div class="face left"></div>
+      <div class="face top"></div>
+      <div class="face bottom"></div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+
+  <div class="control-group">
+    <div class="control-label">
+      <span>X Scale</span>
+      <span class="value" id="vx">1.0</span>
+    </div>
+    <input type="range" id="sx" min="0.5" max="2" step="0.1" value="1">
+  </div>
+
+  <div class="control-group">
+    <div class="control-label">
+      <span>Y Scale</span>
+      <span class="value" id="vy">1.0</span>
+    </div>
+    <input type="range" id="sy" min="0.5" max="2" step="0.1" value="1">
+  </div>
+
+  <div class="control-group">
+    <div class="control-label">
+      <span>Z Scale</span>
+      <span class="value" id="vz">1.0</span>
+    </div>
+    <input type="range" id="sz" min="0.5" max="2" step="0.1" value="1">
+  </div>
+
+  <div class="buttons">
+    <button class="pause-btn" id="pauseBtn">Pause</button>
+    <button class="reset-btn" id="resetBtn">Reset</button>
+  </div>
+
+</div>
+
+<script>
+const scaler = document.getElementById("scaler");
+const cube = document.getElementById("cube");
+
+const sx = document.getElementById("sx");
+const sy = document.getElementById("sy");
+const sz = document.getElementById("sz");
+
+const vx = document.getElementById("vx");
+const vy = document.getElementById("vy");
+const vz = document.getElementById("vz");
+
+const pauseBtn = document.getElementById("pauseBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+let isPaused = false;
+
+// Apply scaling ONLY to wrapper
+function update() {
+  scaler.style.transform = `scale3d(${sx.value}, ${sy.value}, ${sz.value})`;
+
+  vx.textContent = Number(sx.value).toFixed(1);
+  vy.textContent = Number(sy.value).toFixed(1);
+  vz.textContent = Number(sz.value).toFixed(1);
+}
+
+// Slider events
+[sx, sy, sz].forEach(slider => {
+  slider.addEventListener("input", update);
+});
+
+// Pause / Play
+pauseBtn.addEventListener("click", () => {
+  isPaused = !isPaused;
+  cube.classList.toggle("paused");
+
+  pauseBtn.textContent = isPaused ? "Play" : "Pause";
+  pauseBtn.style.background = isPaused ? "#27ae60" : "#e74c3c";
+});
+
+// Reset
+resetBtn.addEventListener("click", () => {
+  sx.value = 1;
+  sy.value = 1;
+  sz.value = 1;
+  update();
+});
+
+// Init
+update();
+</script>
+
+</body>
+</html>
